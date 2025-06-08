@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 function Connection(first, second, parellel){
     this.first = first;
     this.second = second;
@@ -40,22 +41,14 @@ function parellel(r1,r2)
 {
     const R1 = fromString(r1);
     const R2 = fromString(r2);
-    console.log(r1, r2);
+    // console.log(r1, r2);
     return Fraction(R1.numerator*R2.numerator, R1.numerator*R2.denominator+R2.numerator*R1.denominator);
 }
 function serial(r1,r2){
     const R1 = fromString(r1);
     const R2 = fromString(r2);
-    console.log(r1, r2);
+    // console.log(r1, r2);
     return Fraction(R1.numerator*R2.denominator+R2.numerator*R1.denominator, R1.denominator*R2.denominator);
-}
-function compose(object, bool1, bool2)
-{
-    if(bool1==bool2)
-    {
-         return object.resistors
-    }
-    return [object];
 }
 function goBackReccur(G, index, above=null)
 {
@@ -82,23 +75,22 @@ function goBackReccur(G, index, above=null)
 function solve(desired, resistors)
 {
     const recipes = {}
-    let G = [], beforeG = [], isRunning = true;
+    let beforeG = [], isRunning = true;
+    desired = toString(fromString(desired));
     desired = desired.indexOf("/")==-1?desired+"/1":desired;
     if(desired in resistors)
     {
-        console.log(desired);
-        return ;
+        return desired;
     }
     resistors.forEach(i=>{
-        G.push(i);
         beforeG.push(i);
         recipes[i] = null;
     });
     while(isRunning)
     {
         let newG = [];
-        for(const r of G)
-        {
+        for(const r of beforeG)
+            {
             for(const resistance of beforeG)
             {
                 const Serial = serial(r, resistance);
@@ -123,6 +115,10 @@ function solve(desired, resistors)
         }
         beforeG = newG;
     }
-    console.log(JSON.stringify(goBackReccur(recipes,desired)));
+    return goBackReccur(recipes,desired);
 }
-solve("5/2", ["3","2"])
+export function sendData(desired, resistors)
+{
+    let b = solve(desired, resistors)
+    return JSON.stringify(b);
+}
