@@ -88,7 +88,7 @@ function App() {
     console.log(Nodes[Nodes.length-1].id)
     if(Nodes[Nodes.length-1].type === "ConnectorNode")
     {
-      Nodes[Nodes.length] = ({ id: `${Nodes[Nodes.length-1].id}`, position: { x: Nodes[Nodes.length-1].position.x + 160, y: Nodes[Nodes.length-1].position.y }, data: { label: `Koniec` }, type: 'KondEndNode' })
+      Nodes[Nodes.length-1] = ({ id: `${Number.parseInt(Nodes[Nodes.length-1].id)}`, position: { x: Nodes[Nodes.length-1].position.x + 160, y: Nodes[0].position.y }, data: { label: `Koniec` }, type: 'KondEndNode' })
     }
     setWichNode(Nodes);
     function createEdges(nodes, maxXDiff = 160) {
