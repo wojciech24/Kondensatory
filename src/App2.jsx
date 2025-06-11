@@ -42,7 +42,9 @@ function App() {
   function CreateNodes() {
     let daneParsed = dane.current.value.split(",");
     let wynik = sendData(oczekiwana.current.value, daneParsed);
+    console.log(wynik)
     let resistorsArray = extractResistors(wynik);
+    console.log(resistorsArray)
     let Nodes = [{ id: '0', position: { x: 0, y: 200 }, data: { label: 'Początek' }, type: 'KondStartNode' },]
     let Edges = []
     let lastid = 0
@@ -94,7 +96,11 @@ function App() {
         Math.abs(other.position.y - node.position.y) <= proximityThreshold
       );
     });
-    filteredNodes.push({ id: `${lastid + 1}`, position: { x: xOffset * (lastid-temp + 2), y: 200 }, data: { label: 'Koniec' }, type: 'KondEndNode' })
+    const furthestNode = filteredNodes.reduce((prev, curr) => {
+      if (prev.position.x > curr.position.x) return prev;
+      return curr;
+    })
+    filteredNodes.push({ id: `${lastid + 1}`, position: { x: xOffset+furthestNode.position.x, y: 200 }, data: { label: 'Koniec' }, type: 'KondEndNode' })
     
     setWichNode(filteredNodes);
     console.log(filteredNodes)
@@ -119,7 +125,7 @@ function App() {
       return Edges;
     }
     const EdgesFinal = [...createEdges(Nodes), ...Edges]
-    EdgesFinal.push({ id: `e${lastid}-${lastid+1}`, source: `${lastid-temp}`, target: `${lastid+1}` })
+    EdgesFinal.push({ id: `e${furthestNode.id}-${lastid+1}`, source: `${furthestNode.id}`, target: `${lastid+1}` })
     console.log(EdgesFinal)
     setWichEdge(EdgesFinal);
   }
