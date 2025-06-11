@@ -14,37 +14,34 @@ function App() {
   const [WichEdge, setWichEdge] = useState(initalEdges);
   const oczekiwana = useRef();
   const dane = useRef();
-  function extractResistors(data) {
-    function traverse(node) {
-      if (Array.isArray(node)) {
-        return node.map(traverse).flat();
-      }
-
-      if (typeof node === 'object' && node !== null) {
-        if ('resistors' in node) {
-          const group = node.resistors.map(traverse);
-          if (node.parellel === true) {
-            return [group.map(series => Array.isArray(series) ? series.flat() : [series])];
-          } else {
-            return group.flat();
-          }
-        }
-      }
-      if (!isNaN(Number(node))) {
-        return Number(node);
-      }
-      return [];
+function extractResistors(data) {
+  function traverse(node) {
+    if (Array.isArray(node)) {
+      return node.map(traverse);
     }
-    return traverse(data);
-  }
+    if (typeof node === 'object' && node !== null && 'resistors' in node) {
+      const group = node.resistors.map(traverse);
 
+      if (node.parellel === true) {
+        const parallelGroup = group.map(g => Array.isArray(g) ? g : [g]);
+        return [parallelGroup];
+      } else {
+        return group.flat();
+      }
+    }
+    if (!isNaN(Number(node))) {
+      return Number(node);
+    }
+    return [];
+  }
+  return traverse(data);
+}
 
   function CreateNodes() {
     let daneParsed = dane.current.value.split(",");
     let wynik = sendData(oczekiwana.current.value, daneParsed);
-    console.log(wynik)
     let resistorsArray = extractResistors(wynik);
-    console.log(resistorsArray)
+    resistorsArray = resistorsArray[0];
     let Nodes = [{ id: '0', position: { x: 0, y: 200 }, data: { label: 'Początek' }, type: 'KondStartNode' },]
     let Edges = []
     let lastid = 0
@@ -56,8 +53,16 @@ function App() {
       for (let i = 0; i < steps; i++) {
         let tempId = temp
         for (let j = 0; j < resistors[i].length; j++) {
-          lastid += 1
-          Nodes.push({ id: `${lastid}`, position: { x: xOffset * (j + tempId + 1), y: (i + 1) * 120 }, data: { label: `${resistors[i][j]}` }, type: 'KondRightLeftNode' })
+          if(Array.isArray(resistors[i][j]))
+          {
+            lastid += 1
+            Nodes.push({ id: `${lastid}`, position: { x: xOffset * (j + tempId + 1), y: (i + 1) * 120 }, data: { label: `${resistors[i][j]}` }, type: 'KondRightLeftNode' })
+          }
+          else
+          {
+            lastid += 1
+            Nodes.push({ id: `${lastid}`, position: { x: xOffset * (j + tempId + 1), y: (i + 1) * 120 }, data: { label: `${resistors[i][j]}` }, type: 'KondRightLeftNode' })
+          }
         }
         Edges.push({ id: `e${lastid}-${connectorId}`, source: `${lastid}`, target: `${connectorId}` })
       }
@@ -103,7 +108,6 @@ function App() {
     filteredNodes.push({ id: `${lastid + 1}`, position: { x: xOffset+furthestNode.position.x, y: 200 }, data: { label: 'Koniec' }, type: 'KondEndNode' })
     
     setWichNode(filteredNodes);
-    console.log(filteredNodes)
     function createEdges(nodes, maxXDiff = 160) {
       const Edges = [];
       for (let i = 0; i < nodes.length; i++) {
@@ -126,7 +130,6 @@ function App() {
     }
     const EdgesFinal = [...createEdges(Nodes), ...Edges]
     EdgesFinal.push({ id: `e${furthestNode.id}-${lastid+1}`, source: `${furthestNode.id}`, target: `${lastid+1}` })
-    console.log(EdgesFinal)
     setWichEdge(EdgesFinal);
   }
   return (
@@ -146,8 +149,7 @@ function App() {
         <input type="button" value={"oblicz"} onClick={CreateNodes}></input>
       </div>
       <div style={{ width: '70vw', height: '50vh', paddingTop: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {/*edgeTypes={edgeTypes}*/}
-        <ReactFlow nodes={WichNode} edges={WichEdge} nodeTypes={nodeTypes}  style={{ border: '1px solid black' }} />
+        <ReactFlow nodes={WichNode} edges={WichEdge} nodeTypes={nodeTypes} edgeTypes={edgeTypes} style={{ border: '1px solid black' }} />
       </div>
     </div>
   );
