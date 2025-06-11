@@ -64,8 +64,6 @@ function goBackReccur(G, index, above=null)
         return  resistors;
     }
     return [{resistors: resistors, parellel:value.parellel}]
-
-    
 }
 /**
  * 
@@ -75,7 +73,7 @@ function goBackReccur(G, index, above=null)
 function solve(desired, resistors)
 {
     const recipes = {}
-    let beforeG = [], isRunning = true;
+    let G= [], beforeG = [], isRunning = true;
     desired = toString(fromString(desired));
     desired = desired.indexOf("/")==-1?desired+"/1":desired;
     if(desired in resistors)
@@ -83,13 +81,14 @@ function solve(desired, resistors)
         return desired;
     }
     resistors.forEach(i=>{
+        G.push(i);
         beforeG.push(i);
         recipes[i] = null;
     });
     while(isRunning)
     {
         let newG = [];
-        for(const r of beforeG)
+        for(const r of G)
             {
             for(const resistance of beforeG)
             {
@@ -113,6 +112,7 @@ function solve(desired, resistors)
             }
             if(!isRunning){break;}
         }
+        G.concat(beforeG);
         beforeG = newG;
     }
     return goBackReccur(recipes,desired);
@@ -120,5 +120,5 @@ function solve(desired, resistors)
 export function sendData(desired, resistors)
 {
     let b = solve(desired, resistors)
-    return JSON.stringify(b);
+    return b;
 }

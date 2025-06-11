@@ -41,7 +41,7 @@ function App() {
 
   function CreateNodes() {
     let daneParsed = dane.current.value.split(",");
-    let wynik = JSON.parse(sendData(oczekiwana.current.value, daneParsed));
+    let wynik = sendData(oczekiwana.current.value, daneParsed);
     let resistorsArray = extractResistors(wynik);
     let Nodes = [{ id: '0', position: { x: 0, y: 200 }, data: { label: 'Początek' }, type: 'KondStartNode' },]
     let Edges = []
@@ -64,7 +64,6 @@ function App() {
       resistorsArray.forEach(element => {
         if (Number.isInteger(element)) {
           lastid += 1
-          console.log(element)
           Nodes.push({ id: `${lastid}`, position: { x: xOffset * (lastid + 1), y: 200 }, data: { label: `${element}` }, type: 'KondRightLeftNode' })
         }
         else {
@@ -84,13 +83,21 @@ function App() {
       });
     }
     createParalelNodes(resistorsArray);
-    console.log(Nodes)
-    console.log(Nodes[Nodes.length-1].id)
-    if(Nodes[Nodes.length-1].type === "ConnectorNode")
-    {
-      Nodes[Nodes.length-1] = ({ id: `${Number.parseInt(Nodes[Nodes.length-1].id)}`, position: { x: Nodes[Nodes.length-1].position.x + 160, y: Nodes[0].position.y }, data: { label: `Koniec` }, type: 'KondEndNode' })
-    }
-    setWichNode(Nodes);
+    
+    const proximityThreshold = 30;
+    const filteredNodes = Nodes.filter((node, idx, arr) => {
+      if (node.type !== 'ConnectorNode') return true;
+
+      return !arr.some(other => 
+        other.id !== node.id &&
+        Math.abs(other.position.x - node.position.x) <= proximityThreshold &&
+        Math.abs(other.position.y - node.position.y) <= proximityThreshold
+      );
+    });
+    filteredNodes.push({ id: `${lastid + 1}`, position: { x: xOffset * (lastid-temp + 2), y: 200 }, data: { label: 'Koniec' }, type: 'KondEndNode' })
+    
+    setWichNode(filteredNodes);
+    console.log(filteredNodes)
     function createEdges(nodes, maxXDiff = 160) {
       const Edges = [];
       for (let i = 0; i < nodes.length; i++) {
@@ -100,7 +107,7 @@ function App() {
           const nodeB = nodes[j];
           const xDiff = nodeB.position.x - nodeA.position.x;
           const yDiff = nodeB.position.y - nodeA.position.y;
-          if (xDiff > 0 && xDiff <= maxXDiff && (Math.abs(yDiff) <=80|| nodeA.type === "KondStartNode" ||nodeB.type === "ConnectorNode")&& nodeB.type !== "KondEndNode") {
+          if (xDiff > 0 && xDiff <= maxXDiff && (Math.abs(yDiff) <=200|| nodeA.type === "KondStartNode" ||nodeB.type === "ConnectorNode" || nodeA.type === "ConnectorNode")&& nodeB.type !== "KondEndNode") {
             Edges.push({
               id: `e${nodeA.id}-${nodeB.id}`,
               source: `${nodeA.id}`,
@@ -111,8 +118,9 @@ function App() {
       }
       return Edges;
     }
-    console.log(Nodes)
     const EdgesFinal = [...createEdges(Nodes), ...Edges]
+    EdgesFinal.push({ id: `e${lastid}-${lastid+1}`, source: `${lastid-temp}`, target: `${lastid+1}` })
+    console.log(EdgesFinal)
     setWichEdge(EdgesFinal);
   }
   return (
@@ -132,7 +140,8 @@ function App() {
         <input type="button" value={"oblicz"} onClick={CreateNodes}></input>
       </div>
       <div style={{ width: '70vw', height: '50vh', paddingTop: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <ReactFlow nodes={WichNode} edges={WichEdge} nodeTypes={nodeTypes} edgeTypes={edgeTypes} style={{ border: '1px solid black' }} />
+        {/*edgeTypes={edgeTypes}*/}
+        <ReactFlow nodes={WichNode} edges={WichEdge} nodeTypes={nodeTypes}  style={{ border: '1px solid black' }} />
       </div>
     </div>
   );
